@@ -143,7 +143,7 @@ namespace twasm
         [CMD]
         public static void New(string name = "")
         {
-            if (name == "")
+            if (string.IsNullOrEmpty(name))
                 name = "Example";
             TWASMProject project = new TWASMProject
             {
