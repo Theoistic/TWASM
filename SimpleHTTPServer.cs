@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
+using System.Reflection;
 using System.Text;
 using System.Threading;
 
@@ -132,7 +133,7 @@ namespace twasm
         private void Listen()
         {
             _listener = new HttpListener();
-            _listener.Prefixes.Add("http://*:" + _port.ToString() + "/");
+            _listener.Prefixes.Add("http://127.0.0.1:" + _port.ToString() + "/");
             _listener.Start();
             while (true)
             {
@@ -195,6 +196,35 @@ namespace twasm
                     context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
 
+            }
+            else if(context.Request.Url.AbsolutePath.EndsWith("twasmlogo.png"))
+            {
+                try
+                {
+                    using (Stream input = Utils.ReadResourceStream("Logo-White.png"))
+                    {
+
+                        //Adding permanent http response headers
+                        string mime;
+                        context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(filename), out mime) ? mime : "application/octet-stream";
+                        context.Response.ContentLength64 = input.Length;
+                        context.Response.AddHeader("Date", DateTime.Now.ToString("r"));
+                        context.Response.AddHeader("Last-Modified", System.IO.File.GetLastWriteTime(filename).ToString("r"));
+
+                        byte[] buffer = new byte[1024 * 16];
+                        int nbytes;
+                        while ((nbytes = input.Read(buffer, 0, buffer.Length)) > 0)
+                            context.Response.OutputStream.Write(buffer, 0, nbytes);
+                        input.Close();
+
+                        context.Response.StatusCode = (int)HttpStatusCode.OK;
+                        context.Response.OutputStream.Flush();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+                }
             }
             else
             {

@@ -101,13 +101,15 @@ namespace twasm
             var dependencies = xdoc.Root.Descendants().FirstOrDefault(x => x.Name.LocalName == "dependencies");
             if (dependencies == null)
                 return null;
-            var hasFrameworks = dependencies.Descendants().FirstOrDefault(x => x.Name.LocalName == "group" && x.Attribute("targetFramework").Value.ToLower().Contains(targetFramework.ToLower()));
+            var hasFrameworks = dependencies.Descendants()
+                .Where(x => x.Name.LocalName == "group" && x.Attribute("targetFramework").Value.ToLower().Contains("netstandard"))
+                .OrderByDescending(x => x.Attribute("targetFramework").Value).FirstOrDefault();
             if (hasFrameworks != null)
             {
-                var selectedFramework = hasFrameworks.Descendants().Select(x => (name: (string)x.Attribute("id"), version: (string)x.Attribute("version")));
+                var selectedFramework = hasFrameworks.Descendants().Select(x => (name: x.Attribute("id").Value, version: x.Attribute("version").Value));
                 return selectedFramework;
             }
-            var globalDependency = dependencies.Descendants().Select(x => (name: (string)x.Attribute("id"), version: (string)x.Attribute("version")));
+            var globalDependency = dependencies.Descendants().Select(x => (name: x.Attribute("id").Value, version: x.Attribute("version").Value));
             return globalDependency;
         }
     }

@@ -6,6 +6,9 @@
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>twasm</ToolCommandName>
     <PackageOutputPath>./nupkg</PackageOutputPath>
+    <Deterministic>False</Deterministic>
+    <Version>0.8.4</Version>
+    <AssemblyVersion>0.8.4.0</AssemblyVersion>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,12 +17,20 @@
 
   <ItemGroup>
     <None Remove="Files\app.js" />
+    <None Remove="Files\Fallback\app.js" />
+    <None Remove="Files\Fallback\index.html" />
     <None Remove="Files\index.html" />
+    <None Remove="Files\Logo-White.png" />
+    <None Remove="Files\Logo.png" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="Files\app.js" />
+    <EmbeddedResource Include="Files\Fallback\app.js" />
+    <EmbeddedResource Include="Files\Fallback\index.html" />
     <EmbeddedResource Include="Files\index.html" />
+    <EmbeddedResource Include="Files\Logo-White.png" />
+    <EmbeddedResource Include="Files\Logo.png" />
     <EmbeddedResource Include="Files\ScriptAccess.cs" />
   </ItemGroup>
 

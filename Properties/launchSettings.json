@@ -2,7 +2,7 @@
   "profiles": {
     "twasm": {
       "commandName": "Project",
-      "commandLineArgs": "compile -proj C:\\Users\\sl\\source\\repos\\YT2M\\twasm\\test\\Test.json"
+      "commandLineArgs": "compile -proj C:\\Users\\sl\\source\\repos\\TWASM\\YT2M\\YT2M.csproj"
     }
   }
 }

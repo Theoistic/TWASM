@@ -19,13 +19,19 @@ namespace twasm
     {
         static async Task Main(string[] args)
         {
-            await NCMD.Parse(args);
+            try
+            {
+                await NCMD.Parse(args);
+            } catch(Exception ex)
+            {
+                Logger.Error("Exiting..");
+            }
         }
 
         [CMD]
         public static TWASMProject Convert(string csproj)
         {
-            string output = $"{Path.GetFileNameWithoutExtension(csproj)}.dll";
+            string output = $"{Path.GetFileNameWithoutExtension(csproj)}";
             string projectDirectory = Path.GetFullPath(csproj).Replace(Path.GetFileName(csproj), "");
 
             List<string> sources = new List<string>();
@@ -53,7 +59,7 @@ namespace twasm
                 Content = content,
                 Dependencies = dependencies
             };
-            File.WriteAllText(project.Name+".twasm", JsonConvert.SerializeObject(project));
+            File.WriteAllText(project.Name+".twasm", JsonConvert.SerializeObject(project, Newtonsoft.Json.Formatting.Indented));
             return project;
         }
 
@@ -63,6 +69,14 @@ namespace twasm
             if(string.IsNullOrEmpty(proj))
             {
                 proj = Directory.GetFiles(Environment.CurrentDirectory, "*.twasm").FirstOrDefault();
+                if(string.IsNullOrEmpty(proj))
+                {
+                    proj = Directory.GetFiles(Environment.CurrentDirectory, "*.csproj").FirstOrDefault();
+                }
+                if (string.IsNullOrEmpty(proj))
+                {
+                    Logger.Error("Unable to find a project in the current directory.");
+                }
             }
             TWASMProject project = proj.ToLower().EndsWith(".csproj") ? Convert(proj) : JsonConvert.DeserializeObject<TWASMProject>(File.ReadAllText(proj));
             string directory = Environment.CurrentDirectory;
@@ -99,7 +113,7 @@ namespace twasm
                 $"/r:$WASM_SDK/framework/WebAssembly.Bindings.dll " +
                 $"/r:$WASM_SDK/framework/WebAssembly.Net.Http.dll " +
                 $"{string.Join(" ", project.Sources.Select(x => "$TWASMSOURCEROOT\\" + x.Replace(directory, "")))} ");
-            Logger.Write(RunScript(compileScript.ToString()));
+            Logger.Write(Utils.RunScript(compileScript.ToString()));
 
             // expose the classes to JS
             JSExpose JSE = new JSExpose(project, $"{buildOutput}{project.Name}.dll");
@@ -111,7 +125,7 @@ namespace twasm
             compileScript.AppendLine("$WASM_SDK=\"C:\\mono-wasm-sdk\\\" ");
             compileScript.AppendLine($"$TWASMBuildPath=\"{buildOutput}\" ");
             compileScript.AppendLine($"mono $WASM_SDK/packager.exe --copy=always --out=$TWASMBuildPath/publish {string.Join(" ", project.Content.Select(x => "--asset=$TWASMBuildPath/" + x))} $TWASMBuildPath/{project.Name}.dll");
-            Logger.Write(RunScript(compileScript.ToString()));
+            Logger.Write(Utils.RunScript(compileScript.ToString()));
 
             Console.WriteLine($"mono $WASM_SDK/packager.exe --copy=always --out=$TWASMBuildPath/publish {string.Join(" ", project.Content.Select(x => "--asset=$TWASMBuildPath/" + x))} $TWASMBuildPath/{project.Name}.dll");
 
@@ -120,15 +134,31 @@ namespace twasm
             bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\mono-config.js"));
             bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\runtime.js"));
             bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\dotnet.js"));
-
             File.WriteAllText($"{buildOutput}\\publish\\twasm.js", bundle.ToString());
+            File.Delete($"{buildOutput}\\publish\\mono-config.js");
+            File.Delete($"{buildOutput}\\publish\\runtime.js");
+            File.Delete($"{buildOutput}\\publish\\dotnet.js");
+
+            if(!project.Content.Any(x => x.ToLower().Contains(".html") && x.ToLower().Contains(".js")))
+            {
+                File.WriteAllText($"{buildOutput}\\publish\\index.html", Utils.ReadResource("Fallback.index.html"));
+                File.WriteAllText($"{buildOutput}\\publish\\app.js", Utils.ReadResource("Fallback.app.js"));
+            }
 
             Serve(Path.Combine(buildOutput, "publish"));
         }
 
         [CMD]
-        static void Serve(string dir)
+        public static void Serve(string dir = "")
         {
+            if(string.IsNullOrEmpty(dir))
+            {
+                string gp = Path.Combine(Environment.CurrentDirectory, "bin\\twasm\\publish\\");
+                if (Directory.Exists(gp))
+                {
+                    dir = gp;
+                }
+            }
             SimpleHTTPServer myServer = new SimpleHTTPServer(dir, 8080);
             var processes = Process.GetProcessesByName("Chrome");
             if (processes != null)
@@ -158,21 +188,6 @@ namespace twasm
             File.WriteAllText("app.js", Utils.ReadResource("app.js"));
         }
 
-        static string RunScript(string scriptText)
-        {
-            Runspace runspace = RunspaceFactory.CreateRunspace();
-            runspace.Open();
-            Pipeline pipeline = runspace.CreatePipeline();
-            pipeline.Commands.AddScript(scriptText);
-            pipeline.Commands.Add("Out-String");
-            Collection<PSObject> results = pipeline.Invoke();
-            runspace.Close();
-            StringBuilder stringBuilder = new StringBuilder();
-            foreach (PSObject obj in results)
-            {
-                stringBuilder.AppendLine(obj.ToString());
-            }
-            return stringBuilder.ToString();
-        }
+        
     }
 }
