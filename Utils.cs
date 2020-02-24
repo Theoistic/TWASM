@@ -25,6 +25,13 @@ namespace twasm
             }
         }
 
+        public static bool HasResource(string file)
+        {
+            var assembly = Assembly.GetExecutingAssembly();
+            var resourceName = $"twasm.Files.{file}";
+            return assembly.GetManifestResourceStream(resourceName) != null;
+        }
+
         public static MemoryStream ReadResourceStream(string file)
         {
             var assembly = Assembly.GetExecutingAssembly();

@@ -17,21 +17,41 @@
 
   <ItemGroup>
     <None Remove="Files\app.js" />
-    <None Remove="Files\Fallback\app.js" />
-    <None Remove="Files\Fallback\index.html" />
     <None Remove="Files\index.html" />
+    <None Remove="Files\Lib\dotnet.js" />
+    <None Remove="Files\Lib\dotnet.wasm" />
+    <None Remove="Files\Lib\mono-config.js" />
+    <None Remove="Files\Lib\mscorlib.dll" />
+    <None Remove="Files\Lib\netstandard.dll" />
+    <None Remove="Files\Lib\runtime.js" />
+    <None Remove="Files\Lib\System.Core.dll" />
+    <None Remove="Files\Lib\System.dll" />
+    <None Remove="Files\Lib\System.Net.Http.dll" />
+    <None Remove="Files\Lib\WebAssembly.Bindings.dll" />
+    <None Remove="Files\Lib\WebAssembly.Net.Http.dll" />
     <None Remove="Files\Logo-White.png" />
     <None Remove="Files\Logo.png" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Files\Lib\dotnet.js" />
+    <EmbeddedResource Include="Files\Lib\dotnet.wasm" />
+    <EmbeddedResource Include="Files\Lib\mono-config.js" />
+    <EmbeddedResource Include="Files\Lib\mscorlib.dll" />
+    <EmbeddedResource Include="Files\Lib\netstandard.dll" />
+    <EmbeddedResource Include="Files\Lib\runtime.js" />
+    <EmbeddedResource Include="Files\Lib\System.Core.dll" />
+    <EmbeddedResource Include="Files\Lib\System.dll" />
+    <EmbeddedResource Include="Files\Lib\System.Net.Http.dll" />
+    <EmbeddedResource Include="Files\Lib\WebAssembly.Bindings.dll" />
+    <EmbeddedResource Include="Files\Lib\WebAssembly.Net.Http.dll" />
+    <EmbeddedResource Include="Files\Template\app.js" />
     <EmbeddedResource Include="Files\app.js" />
-    <EmbeddedResource Include="Files\Fallback\app.js" />
-    <EmbeddedResource Include="Files\Fallback\index.html" />
     <EmbeddedResource Include="Files\index.html" />
+    <EmbeddedResource Include="Files\Template\index.html" />
     <EmbeddedResource Include="Files\Logo-White.png" />
     <EmbeddedResource Include="Files\Logo.png" />
-    <EmbeddedResource Include="Files\ScriptAccess.cs" />
+    <EmbeddedResource Include="Files\Template\ScriptAccess.cs" />
   </ItemGroup>
 
   <ItemGroup>

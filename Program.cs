@@ -24,7 +24,7 @@ namespace twasm
                 await NCMD.Parse(args);
             } catch(Exception ex)
             {
-                Logger.Error("Exiting..");
+                Logger.Error(ex.Message);
             }
         }
 
@@ -87,17 +87,16 @@ namespace twasm
                 Directory.CreateDirectory(buildOutput);
             }
 
-            foreach (var (name, version) in project.Dependencies)
+            /*foreach (var (name, version) in project.Dependencies)
             {
                 await PackageManager.Resolve(name, version, "netstandard2.0", buildOutput);
-            }
+            }*/
             foreach(var cnt in project.Content)
             {
                 File.Copy(Path.Combine(directory, cnt), Path.Combine(buildOutput, cnt), true);
             }
 
-            var depFiles = Directory.GetFiles(buildOutput, "*.dll").Where(x => !x.Contains(project.Name));
-
+            /*var depFiles = Directory.GetFiles(buildOutput, "*.dll").Where(x => !x.Contains(project.Name));
             // build the main module
             StringBuilder compileScript = new StringBuilder();
             compileScript.AppendLine("$WASM_SDK=\"C:\\mono-wasm-sdk\\\" ");
@@ -113,40 +112,59 @@ namespace twasm
                 $"/r:$WASM_SDK/framework/WebAssembly.Bindings.dll " +
                 $"/r:$WASM_SDK/framework/WebAssembly.Net.Http.dll " +
                 $"{string.Join(" ", project.Sources.Select(x => "$TWASMSOURCEROOT\\" + x.Replace(directory, "")))} ");
-            Logger.Write(Utils.RunScript(compileScript.ToString()));
+            Logger.Write(Utils.RunScript(compileScript.ToString()));*/
+            var compiler = new Compiler(buildOutput);
+            await compiler.Compile(project);
 
             // expose the classes to JS
             JSExpose JSE = new JSExpose(project, $"{buildOutput}{project.Name}.dll");
-            File.WriteAllText($"{buildOutput}twasm.js", JSE.src.ToString());
-            project.Content.Add($"twasm.js");
+            //File.WriteAllText($"{buildOutput}twasm.js", JSE.src.ToString());
+            //project.Content.Add($"twasm.js");
 
             // build and publish the WASM
+            /*StringBuilder compileScript = new StringBuilder();
             compileScript = new StringBuilder();
             compileScript.AppendLine("$WASM_SDK=\"C:\\mono-wasm-sdk\\\" ");
             compileScript.AppendLine($"$TWASMBuildPath=\"{buildOutput}\" ");
             compileScript.AppendLine($"mono $WASM_SDK/packager.exe --copy=always --out=$TWASMBuildPath/publish {string.Join(" ", project.Content.Select(x => "--asset=$TWASMBuildPath/" + x))} $TWASMBuildPath/{project.Name}.dll");
             Logger.Write(Utils.RunScript(compileScript.ToString()));
-
             Console.WriteLine($"mono $WASM_SDK/packager.exe --copy=always --out=$TWASMBuildPath/publish {string.Join(" ", project.Content.Select(x => "--asset=$TWASMBuildPath/" + x))} $TWASMBuildPath/{project.Name}.dll");
+            */
 
-            StringBuilder bundle = new StringBuilder();
-            bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\twasm.js"));
-            bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\mono-config.js"));
-            bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\runtime.js"));
-            bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\dotnet.js"));
-            File.WriteAllText($"{buildOutput}\\publish\\twasm.js", bundle.ToString());
-            File.Delete($"{buildOutput}\\publish\\mono-config.js");
-            File.Delete($"{buildOutput}\\publish\\runtime.js");
-            File.Delete($"{buildOutput}\\publish\\dotnet.js");
-
-            if(!project.Content.Any(x => x.ToLower().Contains(".html") && x.ToLower().Contains(".js")))
+            if(!Directory.Exists($"{buildOutput}\\publish\\"))
             {
-                File.WriteAllText($"{buildOutput}\\publish\\index.html", Utils.ReadResource("Fallback.index.html"));
-                File.WriteAllText($"{buildOutput}\\publish\\app.js", Utils.ReadResource("Fallback.app.js"));
+                Directory.CreateDirectory($"{buildOutput}\\publish\\");
             }
+            if (!Directory.Exists($"{buildOutput}\\publish\\managed\\"))
+            {
+                Directory.CreateDirectory($"{buildOutput}\\publish\\managed\\");
+            }
+            File.WriteAllBytes($"{buildOutput}\\publish\\dotnet.wasm", Utils.ReadResourceStream("Lib.dotnet.wasm").ToArray());
+            StringBuilder js = new StringBuilder();
+            js.Append(JSE.src.ToString());
+            js.Append(Utils.ReadResource("Lib.mono-config.js"));
+            js.Append(Utils.ReadResource("Lib.runtime.js"));
+            js.Append(Utils.ReadResource("Lib.dotnet.js"));
+            File.WriteAllText($"{buildOutput}\\publish\\twasm.js", js.ToString());
+
+            foreach(var dep in Directory.GetFiles($"{buildOutput}", "*.dll"))
+            {
+                File.Copy(dep, Path.Combine($"{buildOutput}\\publish\\managed\\", Path.GetFileName(dep)));
+            }
+
+            //StringBuilder bundle = new StringBuilder();
+            //bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\twasm.js"));
+            //bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\mono-config.js"));
+            //bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\runtime.js"));
+            //bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\dotnet.js"));
+            //File.WriteAllText($"{buildOutput}\\publish\\twasm.js", bundle.ToString());
+            //File.Delete($"{buildOutput}\\publish\\mono-config.js");
+            //File.Delete($"{buildOutput}\\publish\\runtime.js");
+            //File.Delete($"{buildOutput}\\publish\\dotnet.js");
 
             Serve(Path.Combine(buildOutput, "publish"));
         }
+
 
         [CMD]
         public static void Serve(string dir = "")
@@ -183,9 +201,9 @@ namespace twasm
                 Dependencies = new List<(string name, string version)>()
             };
             File.WriteAllText(project.Name + ".twasm", JsonConvert.SerializeObject(project));
-            File.WriteAllText("ScriptAccess.cs", Utils.ReadResource("ScriptAccess.cs"));
-            File.WriteAllText("index.html", Utils.ReadResource("index.html"));
-            File.WriteAllText("app.js", Utils.ReadResource("app.js"));
+            File.WriteAllText("ScriptAccess.cs", Utils.ReadResource("Template.ScriptAccess.cs"));
+            File.WriteAllText("index.html", Utils.ReadResource("Template.index.html"));
+            File.WriteAllText("app.js", Utils.ReadResource("Template.app.js"));
         }
 
         

@@ -10,24 +10,34 @@ using System.Xml.Linq;
 
 namespace twasm
 {
+
+    public class PackageResolvedInformation
+    {
+        public string Name { get; set; }
+        public string Version { get; set; }
+        public List<string> Files { get; set; }
+    }
+
     public static class PackageManager
     {
-        public static async Task Resolve(string name, string version, string targetFramework, string location)
+        public static async Task<List<PackageResolvedInformation>> Resolve(string name, string version, string targetFramework, string location)
         {
+            List<PackageResolvedInformation> TopLevelResolvedFiles = new List<PackageResolvedInformation>();
             await Task.Run(async () => {
                 try
                 {
                     Logger.Write($"Resolving {name} {version} on {targetFramework} ");
                     var package = GetPackage(name, version);
                     var nuspec = package.GetFile(x => x.Name.EndsWith("nuspec"));
-                    package.ExtractFiles(x => x.Name.EndsWith(".dll"), location);
+                    var filesExtracted = package.ExtractFiles(x => x.FullName.ToLower().Contains("netstandard") && x.Name.EndsWith(".dll"), location);
+                    TopLevelResolvedFiles.Add(new PackageResolvedInformation { Name = name, Version = version, Files = filesExtracted });
                     Logger.Write($"Resolving {name} {version} on {targetFramework} (Done)", ConsoleColor.Green, true);
                     var dependencies = GetDependencies(nuspec, targetFramework);
                     if (dependencies != null)
                     {
                         foreach (var dep in dependencies)
                         {
-                            await Resolve(dep.name, dep.version, targetFramework, location);
+                            TopLevelResolvedFiles.AddRange(await Resolve(dep.name, dep.version, targetFramework, location));
                         }
                     }
                 }
@@ -38,6 +48,7 @@ namespace twasm
                     return;
                 }
             });
+            return TopLevelResolvedFiles;
         }
 
         public static string GetTempNugetCache()
@@ -73,15 +84,18 @@ namespace twasm
             }
         }
 
-        public static void ExtractFiles(this byte[] self, Func<ZipArchiveEntry, bool> predicate, string location)
+        public static List<string> ExtractFiles(this byte[] self, Func<ZipArchiveEntry, bool> predicate, string location)
         {
+            List<string> files = new List<string>();
             using (var zip = new ZipArchive(new MemoryStream(self), ZipArchiveMode.Read))
             {
                 foreach (var entry in zip.Entries.Where(predicate))
                 {
+                    files.Add(Path.Combine(location, entry.Name));
                     entry.ExtractToFile(Path.Combine(location, entry.Name), true);
                 }
             }
+            return files;
         }
 
         public static MemoryStream GetFile(this byte[] self, Func<ZipArchiveEntry, bool> predicate)
