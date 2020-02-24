@@ -8,6 +8,8 @@ using System.Management.Automation.Runspaces;
 using System.Collections.ObjectModel;
 using System.Management.Automation;
 using System.Diagnostics;
+using System.IO.Compression;
+using System.Linq;
 
 namespace twasm
 {
@@ -36,24 +38,53 @@ namespace twasm
         {
             var assembly = Assembly.GetExecutingAssembly();
             var resourceName = $"twasm.Files.{file}";
-            MemoryStream memoryStream = new MemoryStream();
             using (Stream stream = assembly.GetManifestResourceStream(resourceName))
             {
                 if (stream == null) return null;
                 byte[] ba = new byte[stream.Length];
                 stream.Read(ba, 0, ba.Length);
-                MemoryStream ms = new MemoryStream(ba);
-                ms.Position = 0;
+                MemoryStream ms = new MemoryStream(ba)
+                {
+                    Position = 0
+                };
                 return ms;
+            }
+        }
+
+        public static MemoryStream GetLibrary(string file)
+        {
+            MemoryStream ms = new MemoryStream();
+            using (var zip = new ZipArchive(ReadResourceStream("Lib.Libraries.zip"), ZipArchiveMode.Read))
+            {
+                zip.Entries.First(x => x.Name == file).Open().CopyTo(ms);
+                return ms;
+            }
+        }
+
+        public static List<string> Libraries
+        {
+            get
+            {
+                List<string> list = new List<string>();
+                using (var zip = new ZipArchive(ReadResourceStream("Lib.Libraries.zip"), ZipArchiveMode.Read))
+                {
+                    foreach(var entry in zip.Entries)
+                    {
+                        list.Add(entry.Name);
+                    }
+                }
+                return list;
             }
         }
 
         public static Stream GenerateStreamFromString(string s)
         {
             var stream = new MemoryStream();
-            var writer = new StreamWriter(stream);
-            writer.Write(s);
-            writer.Flush();
+            using (StreamWriter writer = new StreamWriter(stream))
+            {
+                writer.Write(s);
+                writer.Flush();
+            }
             stream.Position = 0;
             return stream;
         }
@@ -86,12 +117,9 @@ namespace twasm
                     WindowsPrincipal principal = new WindowsPrincipal(user);
                     isAdmin = principal.IsInRole(WindowsBuiltInRole.Administrator);
                 }
-                catch (UnauthorizedAccessException ex)
-                {
-                    isAdmin = false;
-                }
                 catch (Exception ex)
                 {
+                    Logger.Error(ex.Message);
                     isAdmin = false;
                 }
                 return isAdmin;

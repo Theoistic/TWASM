@@ -21,6 +21,34 @@ namespace twasm
     public class Compiler
     {
 
+
+        public IEnumerable<string> BaseLibraries = new string[]
+        {
+            "WebAssembly.Net.Http.dll",
+            "WebAssembly.Bindings.dll",
+            "WebAssembly.Net.WebSockets.dll",
+            "mscorlib.dll",
+            "netstandard.dll",
+            "Mono.Security.dll",
+            "System.dll",
+            "System.Core.dll",
+            "System.Xml.dll",
+            "System.Xml.Linq.dll",
+            "System.Numerics.dll",
+            "System.Memory.dll",
+            "System.Data.dll",
+            "System.Transactions.dll",
+            "System.Data.DataSetExtensions.dll",
+            "System.Drawing.Common.dll",
+            "System.IO.Compression.dll",
+            "System.IO.Compression.FileSystem.dll",
+            "System.ComponentModel.Composition.dll",
+            "System.Net.Http.dll",
+            "System.Runtime.Serialization.dll",
+            "System.ServiceModel.Internals.dll",
+            
+        };
+
         public SyntaxTree Parse(string filename, CSharpParseOptions options = null)
         {
             var stringText = SourceText.From(File.ReadAllText(filename), Encoding.Default);
@@ -41,11 +69,18 @@ namespace twasm
             // resolve dependencies
             var resolved = await proj.ResolveDependencies(OutputDirectory);
 
-            var refs = resolved.SelectMany(x => x.Files).Select(x => MetadataReference.CreateFromFile(x)).ToList();
-            foreach (var lib in new string[] { "Lib.mscorlib.dll", "Lib.netstandard.dll", 
-                "Lib.System.Core.dll", "Lib.System.dll", "Lib.System.Net.Http.dll", "Lib.WebAssembly.Bindings.dll", "Lib.WebAssembly.Net.Http.dll" })
+            foreach (var lib in Utils.Libraries)
             {
-                refs.Add(MetadataReference.CreateFromStream(Utils.ReadResourceStream(lib)));
+                using (var stream = Utils.GetLibrary(lib))
+                {
+                    File.WriteAllBytes(Path.Combine(OutputDirectory, lib), stream.ToArray());
+                }
+            }
+
+            var refs = resolved.SelectMany(x => x.Files).Select(x => MetadataReference.CreateFromFile(x)).ToList();
+            foreach (var lib in Utils.Libraries)
+            {
+                refs.Add(MetadataReference.CreateFromFile(Path.Combine(OutputDirectory, lib)));
             }
 
             CSharpCompilationOptions DefaultCompilationOptions =
@@ -56,9 +91,11 @@ namespace twasm
             List<SyntaxTree> syntaxTrees = proj.Sources.Select(x => Parse(x, CSharpParseOptions.Default.WithLanguageVersion(LanguageVersion.Latest))).ToList();
             var compilation = CSharpCompilation.Create(proj.Name, syntaxTrees, refs, DefaultCompilationOptions);
 
+            Logger.Write("Compiling Project ...", ConsoleColor.Yellow);
             try
             {
                 var result = compilation.Emit(Path.Combine(OutputDirectory, $"{proj.Name}.dll"), emitpdb ? Path.Combine(OutputDirectory, $"{proj.Name}.pdb") : null);
+                Logger.Write("Compiling Project (Done)", ConsoleColor.Green, true);
                 return result.Diagnostics.Where(x => x.Severity == DiagnosticSeverity.Error).Select(x => new CompilationError { Type = "Error", Message = x.GetMessage() });
             }
             catch (Exception ex)

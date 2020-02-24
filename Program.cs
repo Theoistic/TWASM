@@ -86,83 +86,38 @@ namespace twasm
             {
                 Directory.CreateDirectory(buildOutput);
             }
-
-            /*foreach (var (name, version) in project.Dependencies)
-            {
-                await PackageManager.Resolve(name, version, "netstandard2.0", buildOutput);
-            }*/
             foreach(var cnt in project.Content)
             {
                 File.Copy(Path.Combine(directory, cnt), Path.Combine(buildOutput, cnt), true);
             }
 
-            /*var depFiles = Directory.GetFiles(buildOutput, "*.dll").Where(x => !x.Contains(project.Name));
-            // build the main module
-            StringBuilder compileScript = new StringBuilder();
-            compileScript.AppendLine("$WASM_SDK=\"C:\\mono-wasm-sdk\\\" ");
-            compileScript.AppendLine($"$TWASMBuildPath=\"{buildOutput}\" ");
-            compileScript.AppendLine($"$TWASMSOURCEROOT=\"{directory}\"");
-            compileScript.AppendLine($"csc /target:library -out:{buildOutput}{project.Name}.dll /noconfig /nostdlib " +
-                $"{string.Join(" ", depFiles.Select(x => "/r:"+x.Replace(buildOutput, "").Replace("\\", "/")))} " +
-                $"/r:$WASM_SDK/wasm-bcl/wasm/mscorlib.dll " +
-                $"/r:$WASM_SDK/wasm-bcl/wasm/System.dll " +
-                $"/r:$WASM_SDK/wasm-bcl/wasm/System.Core.dll " +
-                $"/r:$WASM_SDK/wasm-bcl/wasm/Facades/netstandard.dll " +
-                $"/r:$WASM_SDK/wasm-bcl/wasm/System.Net.Http.dll " +
-                $"/r:$WASM_SDK/framework/WebAssembly.Bindings.dll " +
-                $"/r:$WASM_SDK/framework/WebAssembly.Net.Http.dll " +
-                $"{string.Join(" ", project.Sources.Select(x => "$TWASMSOURCEROOT\\" + x.Replace(directory, "")))} ");
-            Logger.Write(Utils.RunScript(compileScript.ToString()));*/
-            var compiler = new Compiler(buildOutput);
-            await compiler.Compile(project);
+
+            var compiler = new Compiler(Path.Combine(buildOutput, "managed\\"));
+            var CompilationErrors = await compiler.Compile(project);
+            foreach(var err in CompilationErrors)
+            {
+                Logger.Error(err.Message);
+            }
 
             // expose the classes to JS
-            JSExpose JSE = new JSExpose(project, $"{buildOutput}{project.Name}.dll");
-            //File.WriteAllText($"{buildOutput}twasm.js", JSE.src.ToString());
-            //project.Content.Add($"twasm.js");
+            JSExpose JSE = new JSExpose(project, Path.Combine(buildOutput, "managed\\", $"{project.Name}.dll"));
 
-            // build and publish the WASM
-            /*StringBuilder compileScript = new StringBuilder();
-            compileScript = new StringBuilder();
-            compileScript.AppendLine("$WASM_SDK=\"C:\\mono-wasm-sdk\\\" ");
-            compileScript.AppendLine($"$TWASMBuildPath=\"{buildOutput}\" ");
-            compileScript.AppendLine($"mono $WASM_SDK/packager.exe --copy=always --out=$TWASMBuildPath/publish {string.Join(" ", project.Content.Select(x => "--asset=$TWASMBuildPath/" + x))} $TWASMBuildPath/{project.Name}.dll");
-            Logger.Write(Utils.RunScript(compileScript.ToString()));
-            Console.WriteLine($"mono $WASM_SDK/packager.exe --copy=always --out=$TWASMBuildPath/publish {string.Join(" ", project.Content.Select(x => "--asset=$TWASMBuildPath/" + x))} $TWASMBuildPath/{project.Name}.dll");
-            */
-
-            if(!Directory.Exists($"{buildOutput}\\publish\\"))
+            if (!Directory.Exists(Path.Combine(buildOutput, "managed\\")))
             {
-                Directory.CreateDirectory($"{buildOutput}\\publish\\");
+                Directory.CreateDirectory(Path.Combine(buildOutput, "managed\\"));
             }
-            if (!Directory.Exists($"{buildOutput}\\publish\\managed\\"))
+            using (var stream = Utils.ReadResourceStream("Lib.dotnet.wasm"))
             {
-                Directory.CreateDirectory($"{buildOutput}\\publish\\managed\\");
+                File.WriteAllBytes(Path.Combine(buildOutput, "dotnet.wasm"), stream.ToArray());
             }
-            File.WriteAllBytes($"{buildOutput}\\publish\\dotnet.wasm", Utils.ReadResourceStream("Lib.dotnet.wasm").ToArray());
             StringBuilder js = new StringBuilder();
             js.Append(JSE.src.ToString());
             js.Append(Utils.ReadResource("Lib.mono-config.js"));
             js.Append(Utils.ReadResource("Lib.runtime.js"));
             js.Append(Utils.ReadResource("Lib.dotnet.js"));
-            File.WriteAllText($"{buildOutput}\\publish\\twasm.js", js.ToString());
+            File.WriteAllText(Path.Combine(buildOutput, "twasm.js"), js.ToString());
 
-            foreach(var dep in Directory.GetFiles($"{buildOutput}", "*.dll"))
-            {
-                File.Copy(dep, Path.Combine($"{buildOutput}\\publish\\managed\\", Path.GetFileName(dep)));
-            }
-
-            //StringBuilder bundle = new StringBuilder();
-            //bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\twasm.js"));
-            //bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\mono-config.js"));
-            //bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\runtime.js"));
-            //bundle.Append(File.ReadAllText($"{buildOutput}\\publish\\dotnet.js"));
-            //File.WriteAllText($"{buildOutput}\\publish\\twasm.js", bundle.ToString());
-            //File.Delete($"{buildOutput}\\publish\\mono-config.js");
-            //File.Delete($"{buildOutput}\\publish\\runtime.js");
-            //File.Delete($"{buildOutput}\\publish\\dotnet.js");
-
-            Serve(Path.Combine(buildOutput, "publish"));
+            Serve(Path.Combine(buildOutput, ""));
         }
 
 
@@ -171,7 +126,7 @@ namespace twasm
         {
             if(string.IsNullOrEmpty(dir))
             {
-                string gp = Path.Combine(Environment.CurrentDirectory, "bin\\twasm\\publish\\");
+                string gp = Path.Combine(Environment.CurrentDirectory, "bin\\twasm\\");
                 if (Directory.Exists(gp))
                 {
                     dir = gp;

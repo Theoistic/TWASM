@@ -20,6 +20,7 @@
     <None Remove="Files\index.html" />
     <None Remove="Files\Lib\dotnet.js" />
     <None Remove="Files\Lib\dotnet.wasm" />
+    <None Remove="Files\Lib\Libraries.zip" />
     <None Remove="Files\Lib\mono-config.js" />
     <None Remove="Files\Lib\mscorlib.dll" />
     <None Remove="Files\Lib\netstandard.dll" />
@@ -36,15 +37,9 @@
   <ItemGroup>
     <EmbeddedResource Include="Files\Lib\dotnet.js" />
     <EmbeddedResource Include="Files\Lib\dotnet.wasm" />
+    <EmbeddedResource Include="Files\Lib\Libraries.zip" />
     <EmbeddedResource Include="Files\Lib\mono-config.js" />
-    <EmbeddedResource Include="Files\Lib\mscorlib.dll" />
-    <EmbeddedResource Include="Files\Lib\netstandard.dll" />
     <EmbeddedResource Include="Files\Lib\runtime.js" />
-    <EmbeddedResource Include="Files\Lib\System.Core.dll" />
-    <EmbeddedResource Include="Files\Lib\System.dll" />
-    <EmbeddedResource Include="Files\Lib\System.Net.Http.dll" />
-    <EmbeddedResource Include="Files\Lib\WebAssembly.Bindings.dll" />
-    <EmbeddedResource Include="Files\Lib\WebAssembly.Net.Http.dll" />
     <EmbeddedResource Include="Files\Template\app.js" />
     <EmbeddedResource Include="Files\app.js" />
     <EmbeddedResource Include="Files\index.html" />

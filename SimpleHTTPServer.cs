@@ -18,7 +18,7 @@ namespace twasm
             "default.htm"
         };
 
-        private static IDictionary<string, string> _mimeTypeMappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) {
+        private static readonly IDictionary<string, string> _mimeTypeMappings = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase) {
             #region extension to MIME type list
             {".asf", "video/x-ms-asf"},
             {".asx", "video/x-ms-asf"},
@@ -145,7 +145,7 @@ namespace twasm
                 }
                 catch (Exception ex)
                 {
-
+                    Logger.Error(ex.Message);
                 }
             }
         }
@@ -175,11 +175,10 @@ namespace twasm
             {
                 try
                 {
-                    Stream input = new FileStream(filename, FileMode.Open);
+                    Stream input = new FileStream(filename, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
                     //Adding permanent http response headers
-                    string mime;
-                    context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(filename), out mime) ? mime : "application/octet-stream";
+                    context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(filename), out var mime) ? mime : "application/octet-stream";
                     context.Response.ContentLength64 = input.Length;
                     context.Response.AddHeader("Date", DateTime.Now.ToString("r"));
                     context.Response.AddHeader("Last-Modified", System.IO.File.GetLastWriteTime(filename).ToString("r"));
@@ -195,6 +194,7 @@ namespace twasm
                 }
                 catch (Exception ex)
                 {
+                    Logger.Error(ex.Message);
                     context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
 
@@ -209,8 +209,7 @@ namespace twasm
                     {
 
                         //Adding permanent http response headers
-                        string mime;
-                        context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(resourceName), out mime) ? mime : "application/octet-stream";
+                        context.Response.ContentType = _mimeTypeMappings.TryGetValue(Path.GetExtension(resourceName), out var mime) ? mime : "application/octet-stream";
                         context.Response.ContentLength64 = input.Length;
                         context.Response.AddHeader("Date", DateTime.Now.ToString("r"));
                         context.Response.AddHeader("Last-Modified", System.IO.File.GetLastWriteTime(filename).ToString("r"));
@@ -227,6 +226,7 @@ namespace twasm
                 }
                 catch (Exception ex)
                 {
+                    Logger.Error(ex.Message);
                     context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                 }
             }

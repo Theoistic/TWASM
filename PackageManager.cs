@@ -32,7 +32,7 @@ namespace twasm
                     var filesExtracted = package.ExtractFiles(x => x.FullName.ToLower().Contains("netstandard") && x.Name.EndsWith(".dll"), location);
                     TopLevelResolvedFiles.Add(new PackageResolvedInformation { Name = name, Version = version, Files = filesExtracted });
                     Logger.Write($"Resolving {name} {version} on {targetFramework} (Done)", ConsoleColor.Green, true);
-                    var dependencies = GetDependencies(nuspec, targetFramework);
+                    var dependencies = GetDependencies(nuspec);
                     if (dependencies != null)
                     {
                         foreach (var dep in dependencies)
@@ -109,7 +109,7 @@ namespace twasm
             }
         }
 
-        public static IEnumerable<(string name, string version)> GetDependencies(Stream nuspec, string targetFramework)
+        public static IEnumerable<(string name, string version)> GetDependencies(Stream nuspec)
         {
             XDocument xdoc = XDocument.Load(nuspec);
             var dependencies = xdoc.Root.Descendants().FirstOrDefault(x => x.Name.LocalName == "dependencies");

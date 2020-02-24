@@ -16,9 +16,9 @@ namespace twasm
         {
             Logger.Write("Resolving Dependencies ...");
             List<PackageResolvedInformation> Result = new List<PackageResolvedInformation>();
-            foreach (var dep in Dependencies)
+            foreach (var (name, version) in Dependencies)
             {
-                Result.AddRange(await PackageManager.Resolve(dep.name, dep.version, "netstandard2.0", dir));
+                Result.AddRange(await PackageManager.Resolve(name, version, "netstandard2.0", dir));
             }
             return Result.Where(x => Dependencies.Any(d => x.Name == d.name && x.Version == d.version)).ToList();
         }
