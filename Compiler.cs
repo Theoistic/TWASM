@@ -46,7 +46,7 @@ namespace twasm
             "System.Net.Http.dll",
             "System.Runtime.Serialization.dll",
             "System.ServiceModel.Internals.dll",
-            
+
         };
 
         public SyntaxTree Parse(string filename, CSharpParseOptions options = null)

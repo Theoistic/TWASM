@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
-using System.Reflection;
-using System.Text;
 using System.Threading;
 
 namespace twasm
@@ -199,7 +197,7 @@ namespace twasm
                 }
 
             }
-            else if(Utils.HasResource(resourceName) || resourceName == "")
+            else if (Utils.HasResource(resourceName) || resourceName == "")
             {
                 if (resourceName == "")
                     resourceName = "index.html";

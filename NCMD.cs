@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace twasm
@@ -43,11 +42,11 @@ namespace twasm
             }
             if (func.ReturnType == typeof(Task))
             {
-                await (Task)func.Invoke(null, newArgs == null ? null : newArgs.ToArray());
+                await (Task)func.Invoke(null, newArgs?.ToArray());
             }
             else
             {
-                await Task.Run(() => func.Invoke(null, newArgs == null ? null : newArgs.ToArray()));
+                await Task.Run(() => func.Invoke(null, newArgs?.ToArray()));
             }
         }
 

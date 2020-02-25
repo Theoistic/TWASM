@@ -32,7 +32,8 @@ namespace twasm
                 src.AppendLine("        document.dispatchEvent(new CustomEvent(\"TWASMReady\", { }));");
                 src.AppendLine("    }");
                 src.AppendLine("};");
-            } catch (Exception ex)
+            }
+            catch (Exception ex)
             {
                 Logger.Error(ex.Message);
             }

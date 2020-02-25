@@ -1,15 +1,11 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Management.Automation;
-using System.Management.Automation.Runspaces;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml;
 using System.Xml.Linq;
 
 namespace twasm
@@ -22,7 +18,8 @@ namespace twasm
             try
             {
                 await NCMD.Parse(args);
-            } catch(Exception ex)
+            }
+            catch (Exception ex)
             {
                 Logger.Error(ex.Message);
             }
@@ -59,17 +56,17 @@ namespace twasm
                 Content = content,
                 Dependencies = dependencies
             };
-            File.WriteAllText(project.Name+".twasm", JsonConvert.SerializeObject(project, Newtonsoft.Json.Formatting.Indented));
+            File.WriteAllText(project.Name + ".twasm", JsonConvert.SerializeObject(project, Newtonsoft.Json.Formatting.Indented));
             return project;
         }
 
         [CMD]
         public static async Task Compile(string proj = "")
         {
-            if(string.IsNullOrEmpty(proj))
+            if (string.IsNullOrEmpty(proj))
             {
                 proj = Directory.GetFiles(Environment.CurrentDirectory, "*.twasm").FirstOrDefault();
-                if(string.IsNullOrEmpty(proj))
+                if (string.IsNullOrEmpty(proj))
                 {
                     proj = Directory.GetFiles(Environment.CurrentDirectory, "*.csproj").FirstOrDefault();
                 }
@@ -82,11 +79,11 @@ namespace twasm
             string directory = Environment.CurrentDirectory;
 
             var buildOutput = Path.Combine(directory, "bin\\twasm\\");
-            if(!Directory.Exists(buildOutput))
+            if (!Directory.Exists(buildOutput))
             {
                 Directory.CreateDirectory(buildOutput);
             }
-            foreach(var cnt in project.Content)
+            foreach (var cnt in project.Content)
             {
                 File.Copy(Path.Combine(directory, cnt), Path.Combine(buildOutput, cnt), true);
             }
@@ -94,7 +91,7 @@ namespace twasm
 
             var compiler = new Compiler(Path.Combine(buildOutput, "managed\\"));
             var CompilationErrors = await compiler.Compile(project);
-            foreach(var err in CompilationErrors)
+            foreach (var err in CompilationErrors)
             {
                 Logger.Error(err.Message);
             }
@@ -124,7 +121,7 @@ namespace twasm
         [CMD]
         public static void Serve(string dir = "")
         {
-            if(string.IsNullOrEmpty(dir))
+            if (string.IsNullOrEmpty(dir))
             {
                 string gp = Path.Combine(Environment.CurrentDirectory, "bin\\twasm\\");
                 if (Directory.Exists(gp))
@@ -161,6 +158,6 @@ namespace twasm
             File.WriteAllText("app.js", Utils.ReadResource("Template.app.js"));
         }
 
-        
+
     }
 }

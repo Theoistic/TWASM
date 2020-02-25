@@ -4,7 +4,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
 
@@ -23,7 +22,8 @@ namespace twasm
         public static async Task<List<PackageResolvedInformation>> Resolve(string name, string version, string targetFramework, string location)
         {
             List<PackageResolvedInformation> TopLevelResolvedFiles = new List<PackageResolvedInformation>();
-            await Task.Run(async () => {
+            await Task.Run(async () =>
+            {
                 try
                 {
                     Logger.Write($"Resolving {name} {version} on {targetFramework} ");
