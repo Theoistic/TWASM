@@ -2,8 +2,8 @@
 
 Theoistic WebAssembly is a .NET tool to easily create WebAssemblies with .NET
 
-It was created to be easily implemented in existing solutions, that require more raw power on the clientside than what JavaScript can handle. without the heavy pipepline of blazor.
-When one just needs to option to compile some source code down that one already has on the server side that could be run on the clientside to lesser the server load. without implementing an entire server side framework.
+It was created to be easily implemented in existing solutions, that requires more raw power on the clientside than what JavaScript can handle. without the heavy pipepline of blazor.
+When one just needs an option to compile some source code down that one already has on the server side that could be run on the clientside to lesser the server load. without implementing an entire server side framework.
 
 Install:
 ``` bash
@@ -17,10 +17,6 @@ Compile:
 ``` bash
 twasm compile
 ```
-
-this will install, create a new default template project and compile the project in the the bin/twasm/ folder,
-additionally it will create a bin/twasm/publish folder which is the final output.
-
 Optionally, you can also compile a csproj directly
 if you cd. into a C# .NETStandard Library directory and just call:
 ``` bash
@@ -41,7 +37,7 @@ take a look at the Example.twasm and ScriptAccess.cs and app.js to get a better 
 
 # Exposed Classes
 Currently, you have the option to list static classes in the twasm project file under "Expose", this will trigger a
-build procedure when compiling to parse the C# Class and explose its methods to be exposed within the twasm.js startup initalization.
+build procedure when compiling, to parse the C# classes and explose its methods to be exposed within the twasm.js startup initalization.
 Classes are named as they are declared within C#, Example below contains a ScriptAccess.cs class which has a simple Hello method.
 when compiled with twasm, you can call it directly from javascript.
 ``` csharp
@@ -65,7 +61,7 @@ document.addEventListener("TWASMReady", function (e) {
 The TWASMReady is triggered once all required system files have been loaded into the local dotnet runtime.
 
 # Hosted Testing Environment
-if need to test our your previous compilation. you can call:
+if you need to test out your previous compilation. you can call:
 ``` bash
 twasm serve
 ```
